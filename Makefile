@@ -1,14 +1,13 @@
-L_PG_HOME ?= /usr/local/pgsql/bin
+L_PG_HOME ?= ~/bin/postgres/bin
 PG_PORT ?= 5432
 PG_DATAS ?= PG10_DATAS
 PG_AUTH ?= md5
 PG_LOGFILE ?= logfile
-PG_USER ?= xiaoming
+PG_USER ?= $(USER) 
 CONF ?= .conf
 CERTS_DIR ?= certs
 CERTS_DAYS ?= 365
-OPENSSL ?= /usr/local/bin/openssl
-
+OPENSSL ?= openssl
 
 _certs:
 	mkdir -p $(CERTS_DIR)
@@ -26,30 +25,26 @@ _init_db: _certs
 	$(L_PG_HOME)/initdb -D $(PG_DATAS) -U $(PG_USER) --pwfile $(CONF)/pwd.conf --auth=$(PG_AUTH)
 
 
-test:
-	@echo "test"
-	@cat $(CONF)/pwd.conf | xargs echo
-
 init_db: _init_db
-	sed -i ".bkg" "s/#port = 5432/port = 5432/g" $(PG_DATAS)/postgresql.conf
-	sed -i ".bkg" "s/#wal_level = minimal/wal_level = hot_standby/g" $(PG_DATAS)/postgresql.conf
-	sed -i ".bkg" "s/#unix_socket_directories/unix_socket_directories/g" $(PG_DATAS)/postgresql.conf
+	sed -i "s/#port = 5432/port = 5432/g" $(PG_DATAS)/postgresql.conf
+	sed -i "s/#wal_level = minimal/wal_level = hot_standby/g" $(PG_DATAS)/postgresql.conf
+	sed -i "s/#unix_socket_directories/unix_socket_directories/g" $(PG_DATAS)/postgresql.conf
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS) -l $(PG_LOGFILE) start
 	sleep 5
 	@echo ""
 	@echo "password is:"
 	@cat $(CONF)/pwd.conf
 	@echo ""
-	$(L_PG_HOME)/psql -p 5432 postgres < $(CONF)/create_master_user.sql
-	$(L_PG_HOME)/psql -p 5432 postgres < $(CONF)/pg_bkg.sql
+	psql -U $(PG_USER) -p 5432 postgres < $(CONF)/create_master_user.sql
+	psql -U $(PG_USER) -p 5432 postgres < $(CONF)/pg_bkg.sql
 	echo "host	replication	repuser	127.0.0.1/32	md5" >> $(PG_DATAS)/pg_hba.conf
 	echo "local	replication	repuser		md5" >> $(PG_DATAS)/pg_hba.conf
-	sed -i ".bkg" "s/#max_wal_senders = 0/max_wal_senders = 4/g" $(PG_DATAS)/postgresql.conf
-	sed -i ".bkg" "s/#synchronous_standby_names = ''/synchronous_standby_names = 'standby01,standby02'/g" $(PG_DATAS)/postgresql.conf
-	sed -i ".bkg" "s/#hot_standby = off/hot_standby = on/g" $(PG_DATAS)/postgresql.conf
+	sed -i "s/#max_wal_senders = 0/max_wal_senders = 4/g" $(PG_DATAS)/postgresql.conf
+	sed -i "s/#synchronous_standby_names = ''/synchronous_standby_names = 'standby01,standby02'/g" $(PG_DATAS)/postgresql.conf
+	sed -i "s/#hot_standby = off/hot_standby = on/g" $(PG_DATAS)/postgresql.conf
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS) -l $(PG_LOGFILE) stop
 	sleep 3
-	# sed -i ".bkg" "s/#ssl = off/ssl = on/g" $(PG_DATAS)/postgresql.conf
+	sed -i "s/#ssl = off/ssl = on/g" $(PG_DATAS)/postgresql.conf
 	cp -r $(PG_DATAS) $(PG_DATAS)_1
 	cp -r $(PG_DATAS) $(PG_DATAS)_2
 	cp $(CERTS_DIR)/localhost.crt $(PG_DATAS)/server.crt
@@ -60,8 +55,10 @@ init_db: _init_db
 	cp $(CERTS_DIR)/2_localhost.key $(PG_DATAS)_2/server.key
 	cp $(CONF)/recovery.conf.01 $(PG_DATAS)_1/recovery.conf
 	cp $(CONF)/recovery.conf.02 $(PG_DATAS)_2/recovery.conf
-	sed -i ".bkg" "s/port = 5432/port = 5433/g" $(PG_DATAS)_1/postgresql.conf
-	sed -i ".bkg" "s/port = 5432/port = 5434/g" $(PG_DATAS)_2/postgresql.conf
+	sed -i "s/port = 5432/port = 5433/g" $(PG_DATAS)_1/postgresql.conf
+	sed -i "s/port = 5432/port = 5434/g" $(PG_DATAS)_2/postgresql.conf
+	chmod -666 */server.key
+	chmod +600 */server.key
 
 restart:
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS) -l $(PG_LOGFILE) restart
