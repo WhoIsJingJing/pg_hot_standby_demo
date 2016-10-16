@@ -1,0 +1,2 @@
+
+CREATE USER repuser replication LOGIN CONNECTION LIMIT 3 ENCRYPTED PASSWORD 'repuser'

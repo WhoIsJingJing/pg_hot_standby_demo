@@ -1,0 +1,3 @@
+standby_mode = 'on'
+primary_conninfo = 'application_name=standby01 user=repuser password=repuser host=127.0.0.1 port=5432'
+
