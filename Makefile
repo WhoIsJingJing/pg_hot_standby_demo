@@ -10,6 +10,11 @@ CERTS_DAYS ?= 365
 OPENSSL ?= openssl
 SYS_TYPE ?= $$(uname)
 
+ifeq ($(SYS_TYPE),Darwin)
+	@echo "Darwin"
+	SED_I=".bkg"
+endif
+
 test:
 	@echo $(SYS_TYPE)
 
@@ -29,9 +34,9 @@ _init_db: _certs
 	$(L_PG_HOME)/initdb -D $(PG_DATAS) -U $(PG_USER) --pwfile $(CONF)/pwd.conf --auth=$(PG_AUTH)
 
 init_db: _init_db
-	sed -i ".bkg" "s/#port = 5432/port = 5432/g" $(PG_DATAS)/postgresql.conf
-	sed -i ".bkg" "s/#wal_level = minimal/wal_level = hot_standby/g" $(PG_DATAS)/postgresql.conf
-	sed -i ".bkg" "s/#unix_socket_directories/unix_socket_directories/g" $(PG_DATAS)/postgresql.conf
+	sed -i $(SED_I) "s/#port = 5432/port = 5432/g" $(PG_DATAS)/postgresql.conf
+	sed -i $(SED_I) "s/#wal_level = minimal/wal_level = hot_standby/g" $(PG_DATAS)/postgresql.conf
+	sed -i $(SED_I) "s/#unix_socket_directories/unix_socket_directories/g" $(PG_DATAS)/postgresql.conf
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS) -l $(PG_LOGFILE) start
 	sleep 5
 	@echo ""
@@ -42,12 +47,12 @@ init_db: _init_db
 	psql -U $(PG_USER) -p 5432 postgres < $(CONF)/pg_bkg.sql
 	echo "host	replication	repuser	127.0.0.1/32	md5" >> $(PG_DATAS)/pg_hba.conf
 	echo "local	replication	repuser		md5" >> $(PG_DATAS)/pg_hba.conf
-	sed -i ".bkg" "s/#max_wal_senders = 0/max_wal_senders = 4/g" $(PG_DATAS)/postgresql.conf
-	sed -i ".bkg" "s/#synchronous_standby_names = ''/synchronous_standby_names = 'standby01,standby02'/g" $(PG_DATAS)/postgresql.conf
-	sed -i ".bkg" "s/#hot_standby = off/hot_standby = on/g" $(PG_DATAS)/postgresql.conf
+	sed -i $(SED_I) "s/#max_wal_senders = 0/max_wal_senders = 4/g" $(PG_DATAS)/postgresql.conf
+	sed -i $(SED_I) "s/#synchronous_standby_names = ''/synchronous_standby_names = 'standby01,standby02'/g" $(PG_DATAS)/postgresql.conf
+	sed -i $(SED_I) "s/#hot_standby = off/hot_standby = on/g" $(PG_DATAS)/postgresql.conf
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS) -l $(PG_LOGFILE) stop
 	sleep 3
-	sed -i ".bkg" "s/#ssl = off/ssl = on/g" $(PG_DATAS)/postgresql.conf
+	sed -i $(SED_I) "s/#ssl = off/ssl = on/g" $(PG_DATAS)/postgresql.conf
 	cp -r $(PG_DATAS) $(PG_DATAS)_1
 	cp -r $(PG_DATAS) $(PG_DATAS)_2
 	cp $(CERTS_DIR)/localhost.crt $(PG_DATAS)/server.crt
@@ -58,8 +63,8 @@ init_db: _init_db
 	cp $(CERTS_DIR)/2_localhost.key $(PG_DATAS)_2/server.key
 	cp $(CONF)/recovery.conf.01 $(PG_DATAS)_1/recovery.conf
 	cp $(CONF)/recovery.conf.02 $(PG_DATAS)_2/recovery.conf
-	sed -i ".bkg" "s/port = 5432/port = 5433/g" $(PG_DATAS)_1/postgresql.conf
-	sed -i ".bkg" "s/port = 5432/port = 5434/g" $(PG_DATAS)_2/postgresql.conf
+	sed -i $(SED_I) "s/port = 5432/port = 5433/g" $(PG_DATAS)_1/postgresql.conf
+	sed -i $(SED_I) "s/port = 5432/port = 5434/g" $(PG_DATAS)_2/postgresql.conf
 	chmod 0000 */server.key
 	chmod 0600 */server.key
 
