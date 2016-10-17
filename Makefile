@@ -8,15 +8,12 @@ CONF ?= .conf
 CERTS_DIR ?= certs
 CERTS_DAYS ?= 365
 OPENSSL ?= openssl
-SYS_TYPE ?= $$(uname)
-
-ifeq ($(SYS_TYPE),Darwin)
-	@echo "Darwin"
-	SED_I=".bkg"
-endif
+SYS_TYPE ?= $(shell uname)
+SED_I ?= ".bkg"
 
 test:
 	@echo $(SYS_TYPE)
+	@echo $(SED_I)
 
 _certs:
 	mkdir -p $(CERTS_DIR)
