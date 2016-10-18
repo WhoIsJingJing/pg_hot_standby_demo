@@ -12,8 +12,7 @@ SYS_TYPE ?= $(shell uname)
 SED_I ?= ".bkg"
 
 test:
-	@echo $(SYS_TYPE)
-	@echo $(SED_I)
+	@ps aux | grep $(L_PG_HOME)/postgres
 
 _certs:
 	mkdir -p $(CERTS_DIR)
@@ -69,12 +68,20 @@ restart:
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS) -l $(PG_LOGFILE) restart
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS)_1 -l $(PG_LOGFILE)_1 restart
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS)_2 -l $(PG_LOGFILE)_2 restart
+	@ps aux | grep $(L_PG_HOME)/postgres
 
 start:
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS) -l $(PG_LOGFILE) start
 	sleep 5
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS)_1 -l $(PG_LOGFILE)_1 start
 	$(L_PG_HOME)/pg_ctl -D $(PG_DATAS)_2 -l $(PG_LOGFILE)_2 start
+	@ps aux | grep $(L_PG_HOME)/postgres
+
+stop:
+	$(L_PG_HOME)/pg_ctl stop -D $(PG_DATAS)
+	$(L_PG_HOME)/pg_ctl stop -D $(PG_DATAS)_1
+	$(L_PG_HOME)/pg_ctl stop -D $(PG_DATAS)_2
+	@ps aux | grep $(L_PG_HOME)/postgres
 
 clean:
 	rm -rf $(PG_DATAS)
@@ -84,10 +91,8 @@ clean:
 	rm -f $(PG_LOGFILE)_1
 	rm -f $(PG_LOGFILE)_2
 	rm -rf $(CERTS_DIR)
-stop:
-	$(L_PG_HOME)/pg_ctl stop -D $(PG_DATAS)
-	$(L_PG_HOME)/pg_ctl stop -D $(PG_DATAS)_1
-	$(L_PG_HOME)/pg_ctl stop -D $(PG_DATAS)_2
 
 all: start_db
+
+.PHONY: start_db
 
