@@ -2,3 +2,4 @@ PG10_DATAS*
 logfile*
 certs
 gmon.out
+REDIS_WORKSPACE

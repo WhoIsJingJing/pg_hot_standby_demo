@@ -11,6 +11,14 @@ OPENSSL ?= openssl
 SYS_TYPE ?= $(shell uname)
 SED_I ?= ".bkg"
 
+
+REDIS_HOME ?= /usr/local/opt/redis/bin
+REDIS_WS ?= REDIS_WORKSPACE
+
+redis:
+	@mkdir -p $(REDIS_WS)
+	$(REDIS_HOME)/redis-server .conf/redis.conf --loglevel verbose
+
 test:
 	@ps aux | grep $(L_PG_HOME)/postgres
 
